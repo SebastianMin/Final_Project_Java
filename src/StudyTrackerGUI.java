@@ -1,10 +1,12 @@
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.io.File;
+import java.io.PrintWriter;
+import java.util.ArrayList;
 import javax.swing.*;
 
 /**
- * The GarageGUI class is a graphical user interface for adding, displaying, 
- * and removing vehicles from a garage inventory. It extends JFrame and uses 
+ * The StudyTrackerGUI class is a graphical user interface. It extends JFrame and uses 
  * Swing components to create an interactive UI.
  */
 public class StudyTrackerGUI extends JFrame {
@@ -30,8 +32,8 @@ public class StudyTrackerGUI extends JFrame {
         listModel = new DefaultListModel<>();
         subjectList = new JList<>(listModel);
 
-        // Apply a custom cell renderer to display vehicle details
-        //subjectList.setCellRenderer(new VehicleListCellRenderer());
+        // Apply a custom cell renderer to display subjects details
+        subjectList.setCellRenderer(new SubjectListCellRenderer());
 
         // Configure JFrame properties
         setTitle("Study Tracker");
@@ -39,7 +41,7 @@ public class StudyTrackerGUI extends JFrame {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLayout(new GridLayout(2, 1, 5, 0));
 
-        // Panel for displaying the list of vehicles
+        // Panel for displaying the list of subjects
         JPanel subjectPanel = new JPanel(new BorderLayout());
         subjectPanel.add(new JScrollPane(subjectList)); // Add scrollable list
 
@@ -63,7 +65,7 @@ public class StudyTrackerGUI extends JFrame {
         taskRemoveButton.addActionListener((ActionEvent e) -> {
             int selectedIndex = subjectList.getSelectedIndex();
             if (selectedIndex != -1) {
-                removeTask();
+                removeTask(selectedIndex);
             } else {
                 JOptionPane.showMessageDialog(this, "Please select a subject to delete a task from.", "Error", JOptionPane.ERROR_MESSAGE);
             }
@@ -75,7 +77,7 @@ public class StudyTrackerGUI extends JFrame {
 
         // Create secondary panel for interacting with program
         JPanel secondaryPanel = new JPanel(new BorderLayout());
-        JPanel inputPanel = new JPanel(new GridLayout(2, 2, 10, 5));
+        JPanel inputPanel = new JPanel(new GridLayout(2, 2, 10, 10));
         JPanel secondButtonPanel = new JPanel(new GridLayout(1, 2, 10, 5));
 
         // Text field for subject input
@@ -98,7 +100,7 @@ public class StudyTrackerGUI extends JFrame {
         taskAddButton.addActionListener((ActionEvent e) -> {
             int selectedIndex = subjectList.getSelectedIndex();
             if (selectedIndex != -1) {
-                addTask();
+                addTask(selectedIndex);
             } else {
                 JOptionPane.showMessageDialog(this, "Please select a subject to add a task to.", "Error", JOptionPane.ERROR_MESSAGE);
             }
@@ -119,11 +121,13 @@ public class StudyTrackerGUI extends JFrame {
                     timer = true;
                 } else {
                     stop = System.currentTimeMillis();
-                    long elapsed = stop - start;
+                    //long elapsed = stop - start;
+                    long elapsed = 123456789;
                     listModel.elementAt(selectedIndex).addTime(elapsed);
                     startStopButton.setText("Start Timer");
                     timer = false;
                 }
+                subjectList.repaint();
             } else {
                 JOptionPane.showMessageDialog(this, "Please select a subject to start timing.", "Error", JOptionPane.ERROR_MESSAGE);
             }
@@ -143,7 +147,7 @@ public class StudyTrackerGUI extends JFrame {
         // Set borders for panels
         subjectPanel.setBorder(BorderFactory.createTitledBorder("Subjects"));
         add(subjectPanel);
-        secondaryPanel.setBorder(BorderFactory.createTitledBorder("..."));
+        secondaryPanel.setBorder(BorderFactory.createTitledBorder("Controls"));
         add(secondaryPanel);
 
         // Make the frame visible
@@ -153,79 +157,109 @@ public class StudyTrackerGUI extends JFrame {
     /**
      * 
      */
-    private void removeTask() {
+    private void removeTask(int selectedIndex) {
+        Subject selectedSubject = listModel.getElementAt(selectedIndex);
+        ArrayList<String> tasks = selectedSubject.getTasks();
+        if (tasks.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "No tasks available to remove.", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
 
+        // Create a dialog to select the task to remove
+        String[] tasksArray = tasks.toArray(new String[0]);
+        String taskToRemove = (String) JOptionPane.showInputDialog(
+                this,
+                "Select a task to remove:",
+                "Remove Task",
+                JOptionPane.PLAIN_MESSAGE,
+                null,
+                tasksArray,
+                tasksArray[0]);
+
+        // Check if the user selected a task
+        if (taskToRemove != null) {
+            tasks.remove(taskToRemove);
+            JOptionPane.showMessageDialog(this, "Task removed successfully.", "Success", JOptionPane.INFORMATION_MESSAGE);
+        } else {
+            JOptionPane.showMessageDialog(this, "No task selected.", "Error", JOptionPane.ERROR_MESSAGE);
+        }
+        subjectList.repaint();
     }
 
     /**
-     * Adds a new vehicle to the list model based on user input from the form fields.
+     * Adds a new subject to the list model based on user input from the form fields.
      * Displays error messages if any input validation fails.
      */
     private void addSubject() {
-/*         String vehicle = (String) vehicleComboBox.getSelectedItem();
-        String make = makeField.getText();
-        String model = modelField.getText();
-        String year = yearField.getText();
-        String mileageString = mileageField.getText();
-        int mileage;
-
-        // Validate that all fields are filled
-        if (make.isEmpty() || model.isEmpty() || year.isEmpty() || mileageString.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Please fill out all fields.", "Error", JOptionPane.ERROR_MESSAGE);
+        String newSubjectName = subjectField.getText();
+        if (newSubjectName.isBlank()) {
+            JOptionPane.showMessageDialog(this, "Subject name cannot be blank.", "Error", JOptionPane.ERROR_MESSAGE);
             return;
-        }
-        
-        // Validate that mileage is a positive integer
-        try {
-            mileage = Integer.parseInt(mileageString);
-            if (mileage < 0) {
-                JOptionPane.showMessageDialog(this, "Please enter an integer greater than 0 for mileage.", "Error", JOptionPane.ERROR_MESSAGE);
-                return;
-            }
-        } catch (NumberFormatException e) {
-            JOptionPane.showMessageDialog(this, "Please enter an integer greater than 0 for mileage.", "Error", JOptionPane.ERROR_MESSAGE);
+        } else if (!checkInput(newSubjectName)) {
+            JOptionPane.showMessageDialog(this, "Subject name must be alphanumeric.", "Error", JOptionPane.ERROR_MESSAGE);
             return;
-        }
+        } else {
 
-        // Add the appropriate vehicle type to the list
-        switch (vehicle) {
-            case "Car" -> {
-                Car car = new Car(make, model, year, mileage);
-                listModel.addElement(car);
-                JOptionPane.showMessageDialog(this, "Car added successfully.");
+            for (int i = 0; i < listModel.size(); i++) {
+                if (listModel.get(i).getName().equalsIgnoreCase(newSubjectName)) {
+                    JOptionPane.showMessageDialog(this, "Subject already exists.", "Error", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
             }
-            case "Bike" -> {
-                Bike bike = new Bike(make, model, year, mileage);
-                listModel.addElement(bike);
-                JOptionPane.showMessageDialog(this, "Bike added successfully.");
-            }
-            case "Truck" -> {
-                Truck truck = new Truck(make, model, year, mileage);
-                listModel.addElement(truck);
-                JOptionPane.showMessageDialog(this, "Truck added successfully.");
-            }
-        } */
+
+            Subject newSubject = new Subject(newSubjectName);
+            listModel.addElement(newSubject);
+            JOptionPane.showMessageDialog(this, "Subject added successfully.", "Success", JOptionPane.INFORMATION_MESSAGE);
+        }
     }
 
     /**
      * 
      */
-    private void addTask() {
+    private void addTask(int selectedIndex) {
+        String newTask = taskField.getText();
+        if (newTask.isBlank()) {
+            JOptionPane.showMessageDialog(this, "Task name cannot be blank.", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        } else if (!checkInput(newTask)) {
+            JOptionPane.showMessageDialog(this, "Task name must be alphanumeric.", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        } else {
+            listModel.getElementAt(selectedIndex).addTask(newTask);
+            JOptionPane.showMessageDialog(this, "Task added successfully.", "Success", JOptionPane.INFORMATION_MESSAGE);
+        }
+        subjectList.repaint();
+    }
 
+    private boolean checkInput(String input) {
+        return input.matches("[a-zA-Z0-9 ]+");
     }
 
     /**
      * 
      */
     private void saveData() {
-
+        // Need to check if this works correctly
+        JFileChooser fileChooser = new JFileChooser();
+        if (fileChooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
+            File file = fileChooser.getSelectedFile();
+            try (PrintWriter writer = new PrintWriter(file)) {
+                for (int i = 0; i < listModel.size(); i++) {
+                    Subject subject = listModel.getElementAt(i);
+                    writer.println(subject.toString()); // Need to check if this is what we want to write
+                }
+                JOptionPane.showMessageDialog(this, "Data saved successfully.");
+            } catch (Exception e) {
+                JOptionPane.showMessageDialog(this, "Error saving data: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        }
     }
 
     /**
-     * Main method to run the GarageGUI application.
+     * Main method to run the StudyTrackerGUI application.
      * @param args Command-line arguments (not used).
      */
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(Main::new);
+        SwingUtilities.invokeLater(StudyTrackerGUI::new);
     }
 }

@@ -1,18 +1,20 @@
+import java.util.ArrayList;
 
 public class Subject {
     private final String name;
-    private String[] tasks;
+    private final ArrayList<String> tasks;
     private long time = 0;
 
     public Subject(String name) {
         this.name = name;
+        this.tasks = new ArrayList<>();
     }
 
     public String getName() {
         return name;
     }
 
-    public String[] getTasks() {
+    public ArrayList<String> getTasks() {
         return tasks;
     }
 
@@ -21,14 +23,15 @@ public class Subject {
     }
 
     public void addTime(long time) {
-        this.time = this.time + time;
+        this.time += time;
     }
 
-    public void addTask() {
-        // 
+    public void addTask(String task) {
+        tasks.add(task);
     }
 
-/*     public boolean inputCheck(String input) {
-        return input.matches("[a-zA-Z0-9]");
-    } */
+    @Override
+    public String toString() {
+        return "Name: " + name + ", Time: " + TimeFormatter.formatDuration(time) + ", Tasks: " + tasks.toString();
+    }
 }
