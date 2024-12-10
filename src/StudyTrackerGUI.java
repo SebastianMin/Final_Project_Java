@@ -1,7 +1,10 @@
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.io.BufferedReader;
 import java.io.File;
-import java.io.PrintWriter;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import javax.swing.*;
 
@@ -16,6 +19,7 @@ public class StudyTrackerGUI extends JFrame {
     private final JList<Subject> subjectList;
 
     private boolean timer = false;
+    private int storedIndex = 0;
     private long start;
     private long stop;
 
@@ -44,6 +48,10 @@ public class StudyTrackerGUI extends JFrame {
         // Panel for displaying the list of subjects
         JPanel subjectPanel = new JPanel(new BorderLayout());
         subjectPanel.add(new JScrollPane(subjectList)); // Add scrollable list
+
+        // Populate subjectList from data.csv
+        String filePath = "data.csv";
+        loadDataFromCSV(filePath);
 
         // Panel for remove subject & task buttons
         JPanel subjButtonPanel = new JPanel(new GridLayout(1, 2, 0, 5));
@@ -116,14 +124,14 @@ public class StudyTrackerGUI extends JFrame {
             int selectedIndex = subjectList.getSelectedIndex();
             if (selectedIndex != -1) {
                 if (!timer) {
+                    storedIndex = selectedIndex;
                     start = System.currentTimeMillis();
                     startStopButton.setText("Stop Timer");
                     timer = true;
                 } else {
                     stop = System.currentTimeMillis();
-                    //long elapsed = stop - start;
-                    long elapsed = 123456789;
-                    listModel.elementAt(selectedIndex).addTime(elapsed);
+                    long elapsed = stop - start;
+                    listModel.elementAt(storedIndex).addTime(elapsed);
                     startStopButton.setText("Start Timer");
                     timer = false;
                 }
@@ -156,6 +164,7 @@ public class StudyTrackerGUI extends JFrame {
 
     /**
      * 
+     * @param selectedIndex
      */
     private void removeTask(int selectedIndex) {
         Subject selectedSubject = listModel.getElementAt(selectedIndex);
@@ -211,10 +220,13 @@ public class StudyTrackerGUI extends JFrame {
             listModel.addElement(newSubject);
             JOptionPane.showMessageDialog(this, "Subject added successfully.", "Success", JOptionPane.INFORMATION_MESSAGE);
         }
+
+        subjectField.setText("");
     }
 
     /**
      * 
+     * @param selectedIndex
      */
     private void addTask(int selectedIndex) {
         String newTask = taskField.getText();
@@ -229,8 +241,14 @@ public class StudyTrackerGUI extends JFrame {
             JOptionPane.showMessageDialog(this, "Task added successfully.", "Success", JOptionPane.INFORMATION_MESSAGE);
         }
         subjectList.repaint();
+        taskField.setText("");
     }
 
+    /**
+     * 
+     * @param input
+     * @return
+     */
     private boolean checkInput(String input) {
         return input.matches("[a-zA-Z0-9 ]+");
     }
@@ -239,19 +257,77 @@ public class StudyTrackerGUI extends JFrame {
      * 
      */
     private void saveData() {
-        // Need to check if this works correctly
-        JFileChooser fileChooser = new JFileChooser();
-        if (fileChooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
-            File file = fileChooser.getSelectedFile();
-            try (PrintWriter writer = new PrintWriter(file)) {
-                for (int i = 0; i < listModel.size(); i++) {
-                    Subject subject = listModel.getElementAt(i);
-                    writer.println(subject.toString()); // Need to check if this is what we want to write
+        File file = new File("data.csv");
+        try (FileWriter writer = new FileWriter(file)) {
+            writer.write("Subject Name,Time,Tasks\n");
+            for (int i = 0; i < listModel.size(); i++) {
+                Subject subject = listModel.getElementAt(i);
+                writer.write(subject.getName() + "," + subject.getTime());
+                if (subject.getTasks().isEmpty()) {
+                    writer.write("\n");
+                } else {
+                    for (String task : subject.getTasks()) {
+                        writer.write("," + task);
+                    }
+                    writer.write("\n");
                 }
-                JOptionPane.showMessageDialog(this, "Data saved successfully.");
-            } catch (Exception e) {
-                JOptionPane.showMessageDialog(this, "Error saving data: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
             }
+            JOptionPane.showMessageDialog(this, "Data saved successfully.");
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Error saving data: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    /**
+     * 
+     * @param filePath
+     */
+    private void loadDataFromCSV(String filePath) {
+        try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
+            String line;
+            reader.readLine(); // Ignore header line
+            while ((line = reader.readLine()) != null) {
+                listModel.addElement(parseSubject(line));
+            }
+        } catch (IOException | IllegalArgumentException e) {
+            JOptionPane.showMessageDialog(null, "Error reading file: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    /**
+     * 
+     * @param input
+     * @return
+     */
+    private static Subject parseSubject(String input) {
+        // Remove any leading/trailing whitespace and newlines
+        input = input.trim();
+
+        // Split the string by commas
+        String[] parts = input.split(",");
+
+        // Ensure the array has the expected number of elements
+        if (parts.length < 2) {
+            throw new IllegalArgumentException("Invalid input format");
+        }
+
+        // Get the name (trim whitespace)
+        String name = parts[0].trim();
+
+        // Get the time (convert to long)
+        long time = Long.parseLong(parts[1].trim());
+
+        // Get the tasks (create a list from the remaining parts)
+        ArrayList<String> tasks = new ArrayList<>();
+        for (int i = 2; i < parts.length; i++) {
+            tasks.add(parts[i].trim());
+        }
+
+        // Create and return the Student object
+        if (tasks.isEmpty()) {
+            return new Subject(name, time);
+        } else {
+            return new Subject(name, time, tasks);
         }
     }
 
