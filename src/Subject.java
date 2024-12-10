@@ -2,8 +2,20 @@ import java.util.ArrayList;
 
 public class Subject {
     private final String name;
-    private final ArrayList<String> tasks;
     private long time = 0;
+    private final ArrayList<String> tasks;
+
+    public Subject(String name, long time, ArrayList<String> tasks) {
+        this.name = name;
+        this.time = time;
+        this.tasks = tasks;
+    }
+
+    public Subject(String name, long time) {
+        this.name = name;
+        this.time = time;
+        this.tasks = new ArrayList<>();
+    }
 
     public Subject(String name) {
         this.name = name;
