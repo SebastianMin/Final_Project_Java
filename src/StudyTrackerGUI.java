@@ -160,6 +160,11 @@ public class StudyTrackerGUI extends JFrame {
 
         // Make the frame visible
         setVisible(true);
+        JButton analyticsButton = new JButton("View Analytics");
+        analyticsButton.addActionListener((ActionEvent e) -> {
+            showAnalytics();
+        });
+        secondButtonPanel.add(analyticsButton);
     }
 
     /**
@@ -337,5 +342,68 @@ public class StudyTrackerGUI extends JFrame {
      */
     public static void main(String[] args) {
         SwingUtilities.invokeLater(StudyTrackerGUI::new);
+    }
+    private void showAnalytics() {
+        if (listModel.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "No data available for analysis.", "Analytics", JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+    
+    /**
+     * Analytics section to display the total study time, most and least studied subjects, average time per subject,
+     */
+        long totalTime = 0;
+        Subject mostStudiedSubject = null;
+        Subject leastStudiedSubject = null;
+        int totalTasks = 0;
+        
+        // Analyze data
+        for (int i = 0; i < listModel.size(); i++) {
+            Subject current = listModel.getElementAt(i);
+            totalTime += current.getTime();
+            totalTasks += current.getTasks().size();
+            
+            if (mostStudiedSubject == null || current.getTime() > mostStudiedSubject.getTime()) {
+                mostStudiedSubject = current;
+            }
+            if (leastStudiedSubject == null || current.getTime() < leastStudiedSubject.getTime()) {
+                leastStudiedSubject = current;
+            }
+        }
+    
+        // Calculate averages
+        double avgTimePerSubject = totalTime / (double) listModel.size();
+        double avgTasksPerSubject = totalTasks / (double) listModel.size();
+    
+        // Create analytics report
+        StringBuilder report = new StringBuilder();
+        report.append("Study Analytics Report\n\n");
+        report.append("Total Study Time: ").append(TimeFormatter.formatDuration(totalTime)).append("\n\n");
+        report.append("Most Studied Subject: ").append(mostStudiedSubject.getName())
+              .append(" (").append(TimeFormatter.formatDuration(mostStudiedSubject.getTime())).append(")\n");
+        report.append("Least Studied Subject: ").append(leastStudiedSubject.getName())
+              .append(" (").append(TimeFormatter.formatDuration(leastStudiedSubject.getTime())).append(")\n\n");
+        report.append("Average Time per Subject: ").append(TimeFormatter.formatDuration((long)avgTimePerSubject)).append("\n");
+        report.append("Total Tasks: ").append(totalTasks).append("\n");
+        report.append("Average Tasks per Subject: ").append(String.format("%.1f", avgTasksPerSubject)).append("\n\n");
+        
+        // Time distribution by subject
+        report.append("Time Distribution:\n");
+        for (int i = 0; i < listModel.size(); i++) { // Calculate percentage of total time for each subject
+            Subject subject = listModel.getElementAt(i); // Get the subject
+            double percentage = (subject.getTime() / (double) totalTime) * 100; // Calculate percentage of total time spent studying this subject
+            report.append(String.format("%s: %.1f%%\n", subject.getName(), percentage));// Append the subject name and percentage to the report
+        }
+    
+        // Show analytics in a scrollable dialog
+        JTextArea textArea = new JTextArea(report.toString()); // Create a text area with the report text
+        textArea.setEditable(false);//read only
+        textArea.setFont(new Font("Monospaced", Font.PLAIN, 12)); 
+        
+        JScrollPane scrollPane = new JScrollPane(textArea);
+        scrollPane.setPreferredSize(new Dimension(400, 300));
+        
+        JOptionPane.showMessageDialog(this, scrollPane, "Study Analytics",  // the text is shown as a pop up dialogue window
+            JOptionPane.PLAIN_MESSAGE);
     }
 }
