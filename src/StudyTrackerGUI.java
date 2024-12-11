@@ -348,15 +348,17 @@ public class StudyTrackerGUI extends JFrame {
     public static void main(String[] args) {
         SwingUtilities.invokeLater(StudyTrackerGUI::new);
     }
+
+    /**
+     * Analytics section to display the total study time, most and least studied subjects, average time per subject,
+     */
     private void showAnalytics() {
         if (listModel.isEmpty()) {
             JOptionPane.showMessageDialog(this, "No data available for analysis.", "Analytics", JOptionPane.INFORMATION_MESSAGE);
             return;
         }
-    
-    /**
-     * Analytics section to display the total study time, most and least studied subjects, average time per subject,
-     */
+
+        // Variables
         long totalTime = 0;
         Subject mostStudiedSubject = null;
         Subject leastStudiedSubject = null;
