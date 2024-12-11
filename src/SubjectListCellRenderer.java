@@ -2,7 +2,7 @@ import java.awt.*;
 import javax.swing.*;
 
 /**
- * VehicleListCellRenderer is the same as the DefaultListCellRenderer except its text also includes the index in the JList of the value being rendered in the cell.
+ * SubjectListCellRenderer is the same as the DefaultListCellRenderer except its text also includes the index in the JList of the value being rendered in the cell.
  */
 public class SubjectListCellRenderer extends DefaultListCellRenderer {
 
