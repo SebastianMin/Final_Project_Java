@@ -1,5 +1,7 @@
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -42,8 +44,26 @@ public class StudyTrackerGUI extends JFrame {
         // Configure JFrame properties
         setTitle("Study Tracker");
         setSize(windowWidth, windowHeight);
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
         setLayout(new GridLayout(2, 1, 5, 0));
+
+        // Test
+        addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                int choice = JOptionPane.showConfirmDialog(null, 
+                    "Do you want to save before exiting?", 
+                    "Exit Confirmation", 
+                    JOptionPane.YES_NO_OPTION);
+                
+                if (choice == JOptionPane.YES_OPTION) {
+                    saveData();
+                    System.exit(0);
+                } else if (choice == JOptionPane.NO_OPTION) {
+                    System.exit(0);
+                }
+            }
+        });
 
         // Panel for displaying the list of subjects
         JPanel subjectPanel = new JPanel(new BorderLayout());
