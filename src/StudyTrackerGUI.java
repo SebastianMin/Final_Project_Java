@@ -21,7 +21,7 @@ public class StudyTrackerGUI extends JFrame {
     private final JList<Subject> subjectList;
 
     private boolean timer = false;
-    private int storedIndex = 0;
+    private int storedIndex = -1;
     private long start;
     private long stop;
 
@@ -81,7 +81,11 @@ public class StudyTrackerGUI extends JFrame {
         subjRemoveButton.addActionListener((ActionEvent e) -> {
             int selectedIndex = subjectList.getSelectedIndex();
             if (selectedIndex != -1) {
-                listModel.remove(selectedIndex);
+                if (!timer) {
+                    listModel.remove(selectedIndex);
+                } else {
+                    JOptionPane.showMessageDialog(this, "Please stop timing to delete subjects.", "Error", JOptionPane.ERROR_MESSAGE);
+                }                
             } else {
                 JOptionPane.showMessageDialog(this, "Please select a subject to delete.", "Error", JOptionPane.ERROR_MESSAGE);
             }
@@ -154,6 +158,7 @@ public class StudyTrackerGUI extends JFrame {
                     listModel.elementAt(storedIndex).addTime(elapsed);
                     startStopButton.setText("Start Timer");
                     timer = false;
+                    storedIndex = -1;
                 }
                 subjectList.repaint();
             } else {
@@ -372,7 +377,7 @@ public class StudyTrackerGUI extends JFrame {
             JOptionPane.showMessageDialog(this, "No data available for analysis.", "Analytics", JOptionPane.INFORMATION_MESSAGE);
             return;
         }
-    
+
         // Variables
         long totalTime = 0;
         Subject mostStudiedSubject = null;
