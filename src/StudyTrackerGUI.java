@@ -47,7 +47,7 @@ public class StudyTrackerGUI extends JFrame {
         setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
         setLayout(new GridLayout(2, 1, 5, 0));
 
-        // Test
+        // Window Listener for asking the user if they want to save before closing
         addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {
