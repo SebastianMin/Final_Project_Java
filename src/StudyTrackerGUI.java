@@ -26,6 +26,11 @@ public class StudyTrackerGUI extends JFrame {
     private long start;
     private long stop;
 
+    // Stopwatch UI components
+    private JLabel stopwatchLabel;
+    private JPanel clockPanel;
+    private Timer stopwatchTimer;
+
     /**
      * Constructor for the StudyTrackerGUI class.
      * Initializes the main window, sets up components, and configures layout and behavior.
@@ -69,6 +74,15 @@ public class StudyTrackerGUI extends JFrame {
         // Panel for displaying the list of subjects
         JPanel subjectPanel = new JPanel(new BorderLayout());
         subjectPanel.add(new JScrollPane(subjectList)); // Add scrollable list
+
+        // Clock panel for stopwatch
+        clockPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        stopwatchLabel = new JLabel("00:00:00");
+        stopwatchLabel.setFont(new Font("Monospaced", Font.BOLD, 24));
+        clockPanel.add(stopwatchLabel);
+        // Initially hidden until timer starts
+        clockPanel.setVisible(false);  
+        subjectPanel.add(clockPanel, BorderLayout.NORTH);
 
         // Populate subjectList from data.csv
         String filePath = "data.csv";
@@ -144,22 +158,33 @@ public class StudyTrackerGUI extends JFrame {
         secondaryPanel.add(inputPanel, BorderLayout.NORTH);
 
         // Button to start and stop time
+
         JButton startStopButton = new JButton("Start Timer");
         startStopButton.addActionListener((ActionEvent e) -> {
             int selectedIndex = subjectList.getSelectedIndex();
             if (selectedIndex != -1) {
                 if (!timer) {
+                    // Starting the timer
                     storedIndex = selectedIndex;
                     start = System.currentTimeMillis();
                     startStopButton.setText("Stop Timer");
                     timer = true;
+
+                    // Show and start stopwatch
+                    clockPanel.setVisible(true);
+                    startStopwatchTimer();
                 } else {
+                    // Stopping the timer
                     stop = System.currentTimeMillis();
                     long elapsed = stop - start;
                     listModel.elementAt(storedIndex).addTime(elapsed);
                     startStopButton.setText("Start Timer");
                     timer = false;
                     storedIndex = -1;
+
+                    // Stop and hide stopwatch
+                    stopStopwatchTimer();
+                    clockPanel.setVisible(false);
                 }
                 subjectList.repaint();
             } else {
@@ -191,6 +216,31 @@ public class StudyTrackerGUI extends JFrame {
             showAnalytics();
         });
         secondButtonPanel.add(analyticsButton);
+    }
+    private void startStopwatchTimer() {
+        if (stopwatchTimer != null && stopwatchTimer.isRunning()) {
+            stopwatchTimer.stop();
+        }
+        stopwatchTimer = new Timer(1000, e -> updateStopwatchLabel());
+        stopwatchTimer.start();
+        updateStopwatchLabel(); // Immediate update
+    }
+
+    private void stopStopwatchTimer() {
+        if (stopwatchTimer != null) {
+            stopwatchTimer.stop();
+        }
+    }
+
+    private void updateStopwatchLabel() {
+        // Calculate elapsed time
+        long elapsed = System.currentTimeMillis() - start;
+        long hours = (elapsed / (1000 * 60 * 60)) % 24;
+        long minutes = (elapsed / (1000 * 60)) % 60;
+        long seconds = (elapsed / 1000) % 60;
+
+        String timeFormatted = String.format("%02d:%02d:%02d", hours, minutes, seconds);
+        stopwatchLabel.setText(timeFormatted);
     }
 
     /**
