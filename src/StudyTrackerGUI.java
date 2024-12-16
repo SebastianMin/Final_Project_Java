@@ -11,8 +11,9 @@ import java.util.ArrayList;
 import javax.swing.*;
 
 /**
- * The StudyTrackerGUI class is a graphical user interface. It extends JFrame and uses 
- * Swing components to create an interactive UI.
+ * The StudyTrackerGUI class provides a graphical user interface for managing study tasks and subjects.
+ * It allows users to add/remove subjects and tasks, track time spent on subjects, and save/load data
+ * to/from a CSV file. Analytics such as total study time and averages can also be viewed.
  */
 public class StudyTrackerGUI extends JFrame {
     private final int windowWidth, windowHeight;
@@ -26,8 +27,8 @@ public class StudyTrackerGUI extends JFrame {
     private long stop;
 
     /**
-     * Constructor for the Main class.
-     * Sets up the main window, initializes components, and configures layout and behavior.
+     * Constructor for the StudyTrackerGUI class.
+     * Initializes the main window, sets up components, and configures layout and behavior.
      */
     public StudyTrackerGUI() {
         // Set window dimensions
@@ -193,8 +194,10 @@ public class StudyTrackerGUI extends JFrame {
     }
 
     /**
-     * 
-     * @param selectedIndex
+     * Removes a task from the selected subject. Opens a dialog for the user to select which task to remove.
+     * Displays an error if no tasks are available or no task is selected.
+     *
+     * @param selectedIndex The index of the selected subject in the list model.
      */
     private void removeTask(int selectedIndex) {
         Subject selectedSubject = listModel.getElementAt(selectedIndex);
@@ -227,7 +230,7 @@ public class StudyTrackerGUI extends JFrame {
 
     /**
      * Adds a new subject to the list model based on user input from the form fields.
-     * Displays error messages if any input validation fails.
+     * Displays error messages if the input is invalid (e.g., blank or duplicate subject names).
      */
     private void addSubject() {
         String newSubjectName = subjectField.getText();
@@ -255,8 +258,10 @@ public class StudyTrackerGUI extends JFrame {
     }
 
     /**
-     * 
-     * @param selectedIndex
+     * Adds a new task to the specified subject in the list model.
+     * Displays error messages if the task name is invalid (e.g., blank or non-alphanumeric).
+     *
+     * @param selectedIndex The index of the selected subject in the list model.
      */
     private void addTask(int selectedIndex) {
         String newTask = taskField.getText();
@@ -275,16 +280,18 @@ public class StudyTrackerGUI extends JFrame {
     }
 
     /**
-     * 
-     * @param input
-     * @return
+     * Validates user input to ensure it is alphanumeric with optional spaces.
+     *
+     * @param input The input string to validate.
+     * @return True if the input is valid, false otherwise.
      */
     private static boolean checkInput(String input) {
         return input.matches("[a-zA-Z0-9 ]+");
     }
 
     /**
-     * 
+     * Saves the current list of subjects and tasks to a CSV file.
+     * Displays a confirmation message on successful save or an error message on failure.
      */
     private void saveData() {
         File file = new File("data.csv");
@@ -309,8 +316,10 @@ public class StudyTrackerGUI extends JFrame {
     }
 
     /**
-     * 
-     * @param filePath
+     * Loads data from a CSV file into the list model.
+     * Skips invalid lines and displays error messages for each skipped line.
+     *
+     * @param filePath The path to the CSV file to load.
      */
     private void loadDataFromCSV(String filePath) {
         try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
@@ -332,9 +341,12 @@ public class StudyTrackerGUI extends JFrame {
     }
 
     /**
-     * 
-     * @param input
-     * @return
+     * Parses a single line of CSV data into a Subject object.
+     * Validates the data format and throws an IllegalArgumentException for invalid data.
+     *
+     * @param input The CSV line to parse.
+     * @return A Subject object created from the CSV data.
+     * @throws IllegalArgumentException If the input data is invalid.
      */
     private static Subject parseSubject(String input) {
         // Remove any leading/trailing whitespace and newlines
@@ -378,6 +390,7 @@ public class StudyTrackerGUI extends JFrame {
 
     /**
      * Main method to run the StudyTrackerGUI application.
+     * 
      * @param args Command-line arguments (not used).
      */
     public static void main(String[] args) {
@@ -385,7 +398,8 @@ public class StudyTrackerGUI extends JFrame {
     }
 
     /**
-     * Analytics section to display the total study time, most and least studied subjects, average time per subject,
+     * Displays analytics for the current list of subjects, including total study time,
+     * most/least studied subjects, average time per subject, and task distribution.
      */
     private void showAnalytics() {
         if (listModel.isEmpty()) {
