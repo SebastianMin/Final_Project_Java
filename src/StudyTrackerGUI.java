@@ -279,7 +279,7 @@ public class StudyTrackerGUI extends JFrame {
      * @param input
      * @return
      */
-    private boolean checkInput(String input) {
+    private static boolean checkInput(String input) {
         return input.matches("[a-zA-Z0-9 ]+");
     }
 
@@ -315,11 +315,18 @@ public class StudyTrackerGUI extends JFrame {
     private void loadDataFromCSV(String filePath) {
         try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
             String line;
+            int count = 1;
             reader.readLine(); // Ignore header line
             while ((line = reader.readLine()) != null) {
-                listModel.addElement(parseSubject(line));
+                try {
+                    listModel.addElement(parseSubject(line));
+                    count++;
+                } catch (IllegalArgumentException e) {
+                    // Tell the user there were errors and continue with next line
+                    JOptionPane.showMessageDialog(null, "Invalid data in data.csv\nError parsing line " + ++count + ": " + line + "\nReason: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                }
             }
-        } catch (IOException | IllegalArgumentException e) {
+        } catch (IOException e) {
             JOptionPane.showMessageDialog(null, "Error reading file: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
@@ -338,11 +345,15 @@ public class StudyTrackerGUI extends JFrame {
 
         // Ensure the array has the expected number of elements
         if (parts.length < 2) {
-            throw new IllegalArgumentException("Invalid input format");
+            throw new IllegalArgumentException("Invalid data format");
         }
 
         // Get the name (trim whitespace)
         String name = parts[0].trim();
+
+        if (!checkInput(name)) {
+            throw new IllegalArgumentException("Invalid name value");
+        }
 
         // Get the time (convert to long)
         long time = Long.parseLong(parts[1].trim());
@@ -350,7 +361,11 @@ public class StudyTrackerGUI extends JFrame {
         // Get the tasks (create a list from the remaining parts)
         ArrayList<String> tasks = new ArrayList<>();
         for (int i = 2; i < parts.length; i++) {
-            tasks.add(parts[i].trim());
+            String task = parts[i].trim();
+            if (!checkInput(task)) {
+                throw new IllegalArgumentException("Invalid task value");
+            }
+            tasks.add(task);
         }
 
         // Create and return the Student object
