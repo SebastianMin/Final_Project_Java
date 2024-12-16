@@ -11,10 +11,10 @@ public class SubjectListCellRenderer extends DefaultListCellRenderer {
         // Call the superclass method to ensure default rendering behavior
         super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
 
-        // Cast the value to Vehicle
+        // Cast the value to Subject
         Subject subject = (Subject) value;
 
-        // Set the text to include the index and the vehicle's details
+        // Set the text to include the index and the subject's details
         setText((index + 1) + ". " + subject.toString());
 
         return this;
