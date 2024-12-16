@@ -77,7 +77,7 @@ public class StudyTrackerGUI extends JFrame {
 
         // Clock panel for stopwatch
         clockPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        stopwatchLabel = new JLabel("00:00:00");
+        stopwatchLabel = new JLabel("Subject: 00:00:00");
         stopwatchLabel.setFont(new Font("Monospaced", Font.BOLD, 24));
         clockPanel.add(stopwatchLabel);
         // Initially hidden until timer starts
@@ -158,7 +158,6 @@ public class StudyTrackerGUI extends JFrame {
         secondaryPanel.add(inputPanel, BorderLayout.NORTH);
 
         // Button to start and stop time
-
         JButton startStopButton = new JButton("Start Timer");
         startStopButton.addActionListener((ActionEvent e) -> {
             int selectedIndex = subjectList.getSelectedIndex();
@@ -172,7 +171,7 @@ public class StudyTrackerGUI extends JFrame {
 
                     // Show and start stopwatch
                     clockPanel.setVisible(true);
-                    startStopwatchTimer();
+                    startStopwatchTimer(selectedIndex);
                 } else {
                     // Stopping the timer
                     stop = System.currentTimeMillis();
@@ -200,6 +199,13 @@ public class StudyTrackerGUI extends JFrame {
         });
         secondButtonPanel.add(saveButton);
 
+        // Button to view analytics
+        JButton analyticsButton = new JButton("View Analytics");
+        analyticsButton.addActionListener((ActionEvent e) -> {
+            showAnalytics();
+        });
+        secondButtonPanel.add(analyticsButton);
+
         // Add secondButtonPanel to secondaryPanel
         secondaryPanel.add(secondButtonPanel, BorderLayout.SOUTH);
 
@@ -211,35 +217,43 @@ public class StudyTrackerGUI extends JFrame {
 
         // Make the frame visible
         setVisible(true);
-        JButton analyticsButton = new JButton("View Analytics");
-        analyticsButton.addActionListener((ActionEvent e) -> {
-            showAnalytics();
-        });
-        secondButtonPanel.add(analyticsButton);
     }
-    private void startStopwatchTimer() {
+
+    /**
+     * Starts the stopwatch timer or restarts it if it's already running.
+     * Updates the stopwatch label immediately and at one-second intervals thereafter.
+     */
+    private void startStopwatchTimer(int selectedIndex) {
         if (stopwatchTimer != null && stopwatchTimer.isRunning()) {
             stopwatchTimer.stop();
         }
-        stopwatchTimer = new Timer(1000, e -> updateStopwatchLabel());
+        stopwatchTimer = new Timer(1000, e -> updateStopwatchLabel(selectedIndex));
         stopwatchTimer.start();
-        updateStopwatchLabel(); // Immediate update
+        updateStopwatchLabel(selectedIndex); // Immediate update
     }
 
+    /**
+     * Stops the stopwatch timer if it is currently running.
+     */
     private void stopStopwatchTimer() {
         if (stopwatchTimer != null) {
             stopwatchTimer.stop();
         }
     }
 
-    private void updateStopwatchLabel() {
+    /**
+     * Updates the stopwatch label with the formatted elapsed time since the timer started.
+     * The time is displayed in the format "HH:mm:ss".
+     */
+    private void updateStopwatchLabel(int selectedIndex) {
         // Calculate elapsed time
         long elapsed = System.currentTimeMillis() - start;
         long hours = (elapsed / (1000 * 60 * 60)) % 24;
         long minutes = (elapsed / (1000 * 60)) % 60;
         long seconds = (elapsed / 1000) % 60;
 
-        String timeFormatted = String.format("%02d:%02d:%02d", hours, minutes, seconds);
+        String name = listModel.elementAt(selectedIndex).getName();
+        String timeFormatted = String.format("%s: %02d:%02d:%02d", name, hours, minutes, seconds);
         stopwatchLabel.setText(timeFormatted);
     }
 
@@ -439,15 +453,6 @@ public class StudyTrackerGUI extends JFrame {
     }
 
     /**
-     * Main method to run the StudyTrackerGUI application.
-     * 
-     * @param args Command-line arguments (not used).
-     */
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(StudyTrackerGUI::new);
-    }
-
-    /**
      * Displays analytics for the current list of subjects, including total study time,
      * most/least studied subjects, average time per subject, and task distribution.
      */
@@ -511,5 +516,14 @@ public class StudyTrackerGUI extends JFrame {
         
         JOptionPane.showMessageDialog(this, scrollPane, "Study Analytics",  // the text is shown as a pop up dialogue window
             JOptionPane.PLAIN_MESSAGE);
+    }
+
+    /**
+     * Main method to run the StudyTrackerGUI application.
+     * 
+     * @param args Command-line arguments (not used).
+     */
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(StudyTrackerGUI::new);
     }
 }
